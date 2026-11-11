@@ -1,0 +1,20 @@
+[
+  {
+    "medicine_a": "demo medicine alpha",
+    "medicine_b": "demo medicine beta",
+    "severity": "Moderate",
+    "description": "Illustrative sample rule used only to demonstrate how the application displays a matched pair. This is not a real medical interaction claim."
+  },
+  {
+    "medicine_a": "demo medicine gamma",
+    "medicine_b": "demo medicine delta",
+    "severity": "Severe",
+    "description": "Illustrative sample rule used only to demonstrate severity styling and pipeline testing. This is not a real medical interaction claim."
+  },
+  {
+    "medicine_a": "demo medicine alpha",
+    "medicine_b": "demo medicine epsilon",
+    "severity": "Mild",
+    "description": "Illustrative sample rule used only to demonstrate a low-severity display state. This is not a real medical interaction claim."
+  }
+]

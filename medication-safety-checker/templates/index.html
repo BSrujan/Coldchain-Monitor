@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Medication Safety Checker</title>
+  <style>
+    :root { font-family: Inter, system-ui, Arial, sans-serif; color: #182230; background: #f4f7fb; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    .wrap { max-width: 920px; margin: 48px auto; padding: 0 20px; }
+    header { margin-bottom: 24px; }
+    .eyebrow { color: #3157a4; font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+    h1 { margin: 8px 0; font-size: clamp(28px, 5vw, 40px); }
+    .sub { color: #5b6676; line-height: 1.6; }
+    .card { background: white; border: 1px solid #e1e7ef; border-radius: 16px; padding: 24px; box-shadow: 0 8px 28px rgba(24,34,48,.05); }
+    label { display: block; font-weight: 700; margin-bottom: 9px; }
+    textarea { width: 100%; min-height: 112px; border: 1px solid #cbd5e1; border-radius: 10px; padding: 13px; font: inherit; resize: vertical; }
+    .hint { color: #687588; font-size: 13px; margin: 8px 0 16px; }
+    button { border: 0; background: #2457c5; color: white; font: inherit; font-weight: 700; border-radius: 10px; padding: 12px 18px; cursor: pointer; }
+    button:disabled { opacity: .6; cursor: wait; }
+    .notice { margin-top: 18px; padding: 13px 15px; border-radius: 10px; background: #fff8e6; border: 1px solid #f1d58b; color: #704d00; font-size: 13px; line-height: 1.5; }
+    #status { margin-top: 20px; color: #465366; }
+    .result { margin-top: 14px; border: 1px solid #e1e7ef; border-radius: 12px; padding: 16px; }
+    .pair { font-weight: 750; }
+    .badge { display: inline-block; margin: 8px 0; padding: 4px 9px; border-radius: 999px; font-size: 12px; font-weight: 800; }
+    .Mild { background: #e8f5ed; color: #17663a; }
+    .Moderate { background: #fff2d8; color: #805400; }
+    .Severe { background: #fde8e8; color: #a32020; }
+    .empty { color: #5b6676; padding: 16px 0; }
+    footer { color: #7a8595; font-size: 12px; margin: 22px 2px; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header>
+      <div class="eyebrow">PBL-III · DevSecOps Healthcare Demonstrator</div>
+      <h1>Medication Safety Checker</h1>
+      <p class="sub">Enter two or more sample medicine labels to demonstrate pair checking, API responses and severity-based results.</p>
+    </header>
+
+    <section class="card">
+      <label for="medicines">Medicine names</label>
+      <textarea id="medicines" placeholder="Example demo inputs:&#10;Demo Medicine Alpha&#10;Demo Medicine Beta"></textarea>
+      <p class="hint">Enter one name per line or separate names with commas. Use the clearly labelled demo names shown in the sample dataset.</p>
+      <button id="checkBtn" onclick="checkMedicines()">Check combinations</button>
+      <div class="notice"><strong>Educational demo only:</strong> The included interaction rules are fictional sample records for demonstrating software functionality. This application is not clinically validated, does not provide medical advice, and must not be used to start, stop, or change medication. Consult a qualified healthcare professional for real medication questions.</div>
+      <div id="status" aria-live="polite"></div>
+      <div id="results"></div>
+    </section>
+    <footer>Medication Safety Checker · Flask REST API · Docker-ready</footer>
+  </main>
+
+<script>
+async function checkMedicines() {
+  const raw = document.getElementById("medicines").value;
+  const medicines = raw.split(/[,\n]/).map(x => x.trim()).filter(Boolean);
+  const button = document.getElementById("checkBtn");
+  const status = document.getElementById("status");
+  const results = document.getElementById("results");
+  results.innerHTML = "";
+
+  button.disabled = true;
+  status.textContent = "Checking combinations…";
+  try {
+    const response = await fetch("/api/check", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({medicines})
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Unable to check the submitted names.");
+
+    status.textContent = `${data.medicines.length} names received · ${data.checked_pairs} unique pairs checked · ${data.interactions_found} demo matches`;
+    if (data.interactions.length === 0) {
+      results.innerHTML = '<div class="empty">No matching sample rule was found in the demonstration dataset. This does not mean a real medicine combination is safe.</div>';
+    } else {
+      data.interactions.forEach(item => {
+        const card = document.createElement("article");
+        card.className = "result";
+        const pair = document.createElement("div");
+        pair.className = "pair";
+        pair.textContent = `${item.medicine_a} + ${item.medicine_b}`;
+        const badge = document.createElement("span");
+        badge.className = `badge ${item.severity}`;
+        badge.textContent = `${item.severity} · demo label`;
+        const desc = document.createElement("p");
+        desc.textContent = item.description;
+        card.append(pair, badge, desc);
+        results.appendChild(card);
+      });
+    }
+  } catch (error) {
+    status.textContent = error.message;
+  } finally {
+    button.disabled = false;
+  }
+}
+</script>
+</body>
+</html>
